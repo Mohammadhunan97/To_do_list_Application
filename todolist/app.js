@@ -50,7 +50,6 @@ let Users = sequelize.define('users', {
     type: Sequelize.STRING
   }
 });
-
 let Posts = sequelize.define('posts', {
   description: {
     type: Sequelize.TEXT
@@ -64,118 +63,115 @@ let Posts = sequelize.define('posts', {
   }
 });
 sequelize.sync()
-// Users.create({
-//   username: "Bell",
-//   remote: "foobar"
-// });
-// Posts.create({
-//   description: "some more text",
-//   r_userid: 1
-// })
-
-
-// Posts.findAll().then(function(data){
-//   c(data);
-// })
-let myuser;
-test = Users.findById(1).then(function(data){
-  // c(data.dataValues);
-}).catch(function(err){
-  c("error is " + err);
-})
-// // Users.update({
-// //   username: "stefan" //set
-// // },{
-// //   where: {id: 1} //where
-// // }
-// // )
-// Posts.destroy({
-//   where: {
-//     r_userid: myuser
-//   }
-// }).catch(function(err){
-//   c("error destroying: " + err)
-// })
-myuser = Users.findAll({
-  where: {
-    username : "stefan"
-  }
-}).then(function(data){
-  if(data[0] !== undefined){
-    currentuser = data[0].dataValues.id;
-    c(currentuser)
-
-
-    Posts.destroy({
-      where: {
-        r_userid: currentuser
-      }
-    }).then(function(){
-      c("foobar")
-    }).catch(function(err){
-      c("sum err" + err)
-    })
-
-   } //end of if  
-}).catch(function(err){
-  c("error finding: " + err)
-})
-
-  
-setTimeout(function(){c("funbar")},3000);
-Users.destroy({
-  where: {
-    username: "stefan"
-  }
-}).then(function(){
-
-     Users.findAll({
-          where: {
-            username : "stefan"
-          }
-        }).then(function(data){
-            currentuser = data
-          })
-
-}).catch(function(err){
-  c("error destroying: " + err)
-})
-
 // // 				***** 		SETUP ^					***** 
-
-
-
-
-
-
-
 
 app.get('/',function(req,res){
 	res.render('index')
 })
 
 app.get('/dash',function(req,res){
-	res.render('dashboard')
+   c(req.session)
+
+    Posts.findAll({
+    where: {
+      r_userid: req.session.identification
+     }
+  }).then(function(data){
+    
+    let foh = {
+      a: data,
+      b: req.session.user
+    }
+      res.render('dashboard',foh)
+  })
+
+})
+app.get('/last',function(req,res){
+  Posts.findAll({
+    where: {
+      r_userid: req.session.identification
+     }
+  }).then(function(data){
+    //dataValues.description
+    res.send(data);
+  });
 })
 
-app.post('/signup',function(req,res){
-	c(req.body)
-  c()
-  let user = ('$1', [req.body.username]);
-  let remote = ('$1', [req.body.remote]);
-   Users.create({
-   username: user[0],
-   remote: remote[0]
-  });
 
+
+
+
+
+
+
+app.post('/signup',function(req,res){
+  let user = ('$1', [req.body.username])[0];
+  let remote = ('$1', [req.body.remote])[0];
+  c(user)
+  c(remote)
+
+  bcrypt.hash(remote, saltRounds, function(err, hash) {
+      c(hash)
+      Users.create({
+       username: user,
+      remote: hash
+      });
+  });
 });
 
 app.post('/login',function(req,res){
 	c(req.body)
+  let user = ('$1', [req.body.user_name])[0];
+  let remote = ('$1', [req.body._remote])[0];
+
+  myuser = Users.findAll({
+    where: {
+      username : user
+     }
+  }).then(function(data){
+          c(data[0].dataValues)
+           let dataremote = data[0].dataValues.remote
+
+            
+           
+
+           if((bcrypt.compareSync(remote, dataremote)) == true){
+              req.session.user = user
+              req.session.identification = data[0].dataValues.id
+              c(req.session.identification)
+              c("user is available, user: ") 
+              c(req.session.user);
+               res.redirect('/dash')
+            }else{
+              c("incorrect password")
+            }
+
+  }).catch(function(err){
+    c("error is " + err);
+  })
+  
 });
 
-app.post('/dashboard',function(req,res){
-	c(req.body)
+app.post('/dashing',function(req,res){
+  let description = ('$1',[req.body.description])[0];
+
+
+     Posts.create({
+        description: description,
+        r_userid: req.session.identification
+     })
 });
+
+
+app.delete('/update',function(req,res){
+  c(typeof req.body.postid);
+  c(typeof Number(req.body.postid));
+   Posts.destroy({
+    where: {id: req.body.postid}
+   })
+})
+
+
+
 
 app.listen(3000);

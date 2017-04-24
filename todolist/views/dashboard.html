@@ -2,21 +2,68 @@
 <html>
 <head>
 	<title>Dashboard</title>
+	<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+  <style>
+  button,p{
+  	display: inline-block;
+  }
+  </style>
 </head>
 <body>
 
 
-	<h1>Scope</h1>
 	<br/><br/><br/>
 
-	<form method='POST' action='/dashboard'>
+	<form method='POST' action='/dash'>
 		<h1>Signup</h1>
-		<label> Write a new post:</label> <input type='text' name='description'/>
+		<label> Write a new post:</label> <input id ="description" type='text' name='description'/>
 		<input type='submit'/>
 	</form>
 
-	<div class='posts'>
-
+	<h1>{{b}}</h1>
+	<div class='posts' style="background:lightskyblue">
+		
+		{{#a}}
+		<p class='mykto {{dataValues.id}}'  style="background:#EEE">&nbsp; . {{dataValues.description}}</p><button class='{{dataValues.id}}'>X</button><br/>
+		{{/a}} 
 	</div>
+	<script>
+	const c = console.log;
+		document.getElementsByTagName('form')[0].addEventListener('submit',function(e){
+				e.preventDefault();
+				let newpost = $('#description').val();
+				$.post( "/dashing",{
+					description: newpost
+				});
+
+
+				setTimeout(function(){ //setTimeout is to separate the ajax requests
+				$.get("/last",function(result){
+					 $('.posts').append(`<p class='mykto ${result[result.length-1].id}'>${result[result.length-1].description}</p><button class='${result[result.length-1].id}'>X</button><br/>`);
+					}) //end of get function
+				},550);	//end of set timeout
+			})
+
+		$('button').click(function(){
+			let z = this.className
+			c(z);
+			c(this)
+			// c($("'."+z+"'"));
+			// c($("'."+z+"'").remove());
+			$(".mykto").remove();
+			//$("#div1").remove();
+			
+			$.ajax({
+				  url: 'update',
+				  type: 'DELETE',
+				  data: `postid=${this.className}`
+			});
+			//c($(`.this.className`))
+		//	$(`.this.className`).remove()
+		})		
+	</script>
 </body>
 </html>
